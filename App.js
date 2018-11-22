@@ -2,21 +2,37 @@ import React, { Component } from 'react';
 import { StyleSheet, Alert, PermissionsAndroid } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import DeviceInfo from 'react-native-device-info';
+import axios from 'axios';
 
 export default class App extends Component {
   state = {
     latitude: -22.2888037,
     longitude: -42.5362498,
     error: null,
+    glauber: {
+      name: 'glauber',
+      latitude: -22.2888037,
+      longitude: -42.5362498,
+    },
+    matheus: {
+      name: 'matheus',
+      latitude: -22.2878037,
+      longitude: -42.5352498,
+    },
   };
 
   componentDidMount() {
-    Alert.alert(JSON.stringify(DeviceInfo.getDeviceId()));
+    const deviceId = JSON.stringify(DeviceInfo.getDeviceId());
     !PermissionsAndroid.RESULTS.GRANTED
       ? this.requestGPSPermission()
       : (this.watch = navigator.geolocation.watchPosition(
           ({ coords: { latitude, longitude } }) => {
-            this.setState({ latitude, longitude, error: null });
+            console.warn('teste');
+            this.updateCoords(deviceId, latitude, longitude);
+            this.setState({
+              glauber: { ...this.state.glauber, latitude, longitude },
+              error: null,
+            });
           },
           error => {
             this.setState({ error: error.message });
@@ -26,6 +42,17 @@ export default class App extends Component {
           },
         ));
   }
+
+  updateCoords = async (id, latitude, longitude) => {
+    await axios.put(
+      'https://mappredial-1542805497267.firebaseio.com/user/glauber/coords/.json',
+      {
+        id,
+        latitude,
+        longitude,
+      },
+    );
+  };
 
   requestGPSPermission = async () => {
     const granted = await PermissionsAndroid.request(
@@ -39,7 +66,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { latitude, longitude } = this.state;
+    const { latitude, longitude, glauber, matheus } = this.state;
     return (
       <MapView
         style={styles.map}
@@ -53,11 +80,20 @@ export default class App extends Component {
         <Marker
           coordinate={
             (LatLng = {
-              latitude: latitude,
-              longitude: longitude,
+              latitude: glauber.latitude,
+              longitude: glauber.longitude,
             })
           }
-          title="teste"
+          title={glauber.name}
+        />
+        <Marker
+          coordinate={
+            (LatLng = {
+              latitude: matheus.latitude,
+              longitude: matheus.longitude,
+            })
+          }
+          title={matheus.name}
         />
       </MapView>
     );
